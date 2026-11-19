@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoDenúncia — Sistema de Registro e Acompanhamento Ambiental</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #1b5e20;
+      --primary-hover: #144718;
+      --secondary: #2e7d32;
+      --accent: #e8f5e9;
+      --bg: #f4f7f5;
+      --surface: #ffffff;
+      --text: #1c241e;
+      --muted: #526056;
+      --border: #cfd8d1;
+      --danger: #b71c1c;
+      --danger-bg: #ffebee;
+      --warning: #e65100;
+      --warning-bg: #fff3e0;
+      --info: #0d47a1;
+      --info-bg: #e3f2fd;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Banner Educacional / Aviso Institucional */
+    .top-notice {
+      background-color: #263238;
+      color: #eceff1;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 0.5rem 1rem;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: #fff;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .header-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.35rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    nav button {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    nav button:hover, nav button.active {
+      background: #ffffff;
+      color: var(--primary);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1080px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+
+    h1, h2, h3 { color: var(--primary); margin-bottom: 0.75rem; }
+    p { margin-bottom: 1rem; }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .action-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      background: var(--accent);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--primary-hover); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary { background: #455a64; }
+    .btn-secondary:hover { background: #37474f; }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-outline:hover { background: var(--accent); }
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+
+    /* Formulários */
+    .form-group { margin-bottom: 1.15rem; }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+    .hint { font-size: 0.83rem; color: var(--muted); display: block; margin-top: 0.25rem; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--secondary);
+      border-color: var(--secondary);
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      border-left: 4px solid;
+      font-size: 0.95rem;
+    }
+    .alert-info { background: var(--info-bg); border-color: var(--info); color: #0a367a; }
+    .alert-warning { background: var(--warning-bg); border-color: var(--warning); color: #8c3100; }
+    .alert-danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+    .alert-success { background: var(--accent); border-color: var(--primary); color: var(--primary); }
+
+    /* Protocolo Box */
+    .protocol-box {
+      background: var(--accent);
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .protocol-code {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--primary);
+      font-family: monospace;
+    }
+
+    /* Badges de Status */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .status-Recebida { background: #e3f2fd; color: #0d47a1; }
+    .status-Em-análise { background: #fff3e0; color: #e65100; }
+    .status-Encaminhada { background: #f3e5f5; color: #4a148c; }
+    .status-Concluída { background: #e8f5e9; color: #1b5e20; }
+    .status-Não-procedente\/Duplicada { background: #eceff1; color: #37474f; }
+
+    /* Timeline */
+    .timeline {
+      border-left: 3px solid var(--primary);
+      padding-left: 1.25rem;
+      margin-top: 1rem;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -1.6rem;
+      top: 0.35rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    /* Tabela Admin Responsiva */
+    .table-wrapper { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: var(--accent); color: var(--primary); }
+
+    .filters-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Modal de Detalhes Admin */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-content {
+      background: #fff;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    footer {
+      background: #e8ece9;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.25rem;
+      font-size: 0.85rem;
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="top-notice">
+    Protótipo Educacional — Projeto Integrador (ADS). Não substitui canais oficiais de emergência ou fiscalização ambiental.
+  </div>
+
+  <header>
+    <div class="header-container">
+      <div class="brand" onclick="navegar('home')" role="button" tabindex="0">
+        🌿 EcoDenúncia
+      </div>
+      <nav aria-label="Navegação principal">
+        <button id="nav-home" class="active" onclick="navegar('home')">Início</button>
+        <button id="nav-registrar" onclick="navegar('registrar')">Registrar Ocorrência</button>
+        <button id="nav-consultar" onclick="navegar('consultar')">Consultar Protocolo</button>
+        <button id="nav-admin" onclick="navegar('admin')">Área Administrativa</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- TELA 1: PÁGINA INICIAL (RF01) -->
+    <section id="view-home" class="view active">
+      <div class="card">
+        <h1>Registro e Acompanhamento de Ocorrências Ambientais</h1>
+        <p>
+          O <strong>EcoDenúncia</strong> é uma plataforma web desenvolvida para facilitar a comunicação organizada de situações ambientais identificadas pela comunidade, gerando protocolos individuais para acompanhamento transparente.
+        </p>
+
+        <div class="alert alert-warning">
+          <strong>Atenção em casos urgentes:</strong> Em situações de risco imediato, incêndios de grandes proporções ou crimes ambientais em flagrante, acione diretamente o Corpo de Bombeiros (193), a Polícia Militar (190) ou a Secretaria Municipal de Meio Ambiente.
+        </div>
+
+        <div class="hero-grid">
+          <div class="action-card">
+            <div>
+              <h3>1. Comunicar Ocorrência</h3>
+              <p>Informe a categoria do problema ambiental, descreva o local e a data aproximada. Não é necessário informar seu nome ou CPF.</p>
+            </div>
+            <button class="btn" onclick="navegar('registrar')">Iniciar Novo Registro</button>
+          </div>
+
+          <div class="action-card">
+            <div>
+              <h3>2. Acompanhar Relato</h3>
+              <p>Já possui um número de protocolo e código verificador? Consulte o estado atual da análise técnica.</p>
+            </div>
+            <button class="btn btn-outline" onclick="navegar('consultar')">Consultar Andamento</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Como funciona o tratamento das informações</h3>
+        <p>
+          Todo relato enviado passa inicialmente pelo estado <strong>Recebida</strong>. O registro cidadão possui caráter informativo e não equivale à comprovação automática de infração, cabendo aos responsáveis técnicos avaliar as evidências e atualizar o andamento no sistema.
+        </p>
+      </div>
+    </section>
+
+    <!-- TELA 2: REGISTRO DE OCORRÊNCIA (RF02, RF03, RF04, RF09) -->
+    <section id="view-registrar" class="view">
+      <div class="card">
+        <h2>Registrar Nova Ocorrência Ambiental</h2>
+
+        <div class="alert alert-info">
+          <strong>Aviso de Privacidade (LGPD):</strong> Coletamos apenas os dados necessários para identificar o problema ambiental. Evite incluir nomes de terceiros, placas de veículos ou rostos nas fotografias. As imagens enviadas não são publicadas automaticamente.
+        </div>
+
+        <div id="registro-erro" class="alert alert-danger hidden" role="alert"></div>
+
+        <form id="form-ocorrencia" novalidate>
+          <div class="form-group">
+            <label for="categoria">Categoria do Problema Ambiental *</label>
+            <select id="categoria" required>
+              <option value="">Selecione uma categoria...</option>
+              <option value="Descarte irregular de resíduos">Descarte irregular de resíduos (lixo/entulho)</option>
+              <option value="Queimadas">Queimadas urbanas ou rurais</option>
+              <option value="Poluição de cursos d’água">Poluição de rios, riachos ou açudes</option>
+              <option value="Lançamento inadequado de esgoto">Lançamento inadequado de esgoto</option>
+              <option value="Retirada irregular de vegetação">Desmatamento ou retirada irregular de vegetação</option>
+              <option value="Outros">Outros problemas ambientais</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="municipio">Município *</label>
+            <input type="text" id="municipio" value="São Lourenço do Piauí - PI" required maxlength="100">
+          </div>
+
+          <div class="form-group">
+            <label for="local_informado">Local ou Ponto de Referência *</label>
+            <input type="text" id="local_informado" placeholder="Ex: Próximo à estrada vicinal da comunidade X, terreno baldio na Rua Y" required minlength="5" maxlength="300">
+            <span class="hint">Informe referências claras para localização da área afetada (mínimo 5 caracteres).</span>
+          </div>
+
+          <div class="form-group">
+            <label for="data_aproximada">Data Aproximada da Ocorrência *</label>
+            <input type="date" id="data_aproximada" required>
+          </div>
+
+          <div class="form-group">
+            <label for="descricao">Descrição Detalhada da Situação *</label>
+            <textarea id="descricao" rows="4" placeholder="Descreva o que foi observado, extensão aproximada e se o problema é recorrente..." required minlength="15" maxlength="2000"></textarea>
+            <span class="hint">Mínimo de 15 e máximo de 2000 caracteres.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="foto">Fotografia da Ocorrência (Opcional)</label>
+            <input type="file" id="foto" accept="image/jpeg,image/png,image/webp">
+            <span class="hint">Formatos aceitos: JPG, PNG ou WEBP. Tamanho máximo: 5 MB.</span>
+          </div>
+
+          <button type="submit" id="btn-enviar-ocorrencia" class="btn">Enviar Relato Ambiental</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TELA 3: CONFIRMAÇÃO E PROTOCOLO (RF04) -->
+    <section id="view-confirmacao" class="view">
+      <div class="card">
+        <h2>Relato Registrado com Sucesso!</h2>
+        <p>Guarde as credenciais abaixo. Elas são obrigatórias para consultar o andamento do seu relato posteriormente.</p>
+
+        <div class="protocol-box">
+          <div>Número de Protocolo:</div>
+          <div id="conf-protocolo" class="protocol-code">ECO-2026-000000</div>
+          <div style="margin-top: 0.75rem;">Código Verificador (PIN):</div>
+          <div id="conf-pin" class="protocol-code" style="font-size: 1.4rem;">XXXX</div>
+        </div>
+
+        <div class="alert alert-warning">
+          <strong>Importante:</strong> Por segurança e privacidade, o sistema não permite recuperar protocolos perdidos. Anote ou salve uma captura de tela destes códigos.
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="btn" onclick="copiarProtocolo()">Copiar Protocolo e PIN</button>
+          <button class="btn btn-outline" onclick="irParaConsultaPreenchida()">Acompanhar Este Protocolo</button>
+          <button class="btn btn-secondary" onclick="navegar('home')">Voltar ao Início</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 4: CONSULTA DE ANDAMENTO (RF05) -->
+    <section id="view-consultar" class="view">
+      <div class="card">
+        <h2>Consultar Andamento de Ocorrência</h2>
+        <p>Informe o número do protocolo e o código verificador (PIN) gerados no momento do registro.</p>
+
+        <form id="form-consulta" class="filters-bar" style="align-items: end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="consulta-protocolo">Número de Protocolo *</label>
+            <input type="text" id="consulta-protocolo" placeholder="Ex: ECO-2026-A1B2C3" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="consulta-pin">Código Verificador (PIN) *</label>
+            <input type="text" id="consulta-pin" placeholder="Ex: 9F2A" maxlength="6" required>
+          </div>
+          <div>
+            <button type="submit" id="btn-consultar" class="btn" style="width: 100%;">Consultar</button>
+          </div>
+        </form>
+
+        <div id="consulta-feedback" class="alert alert-danger hidden" style="margin-top: 1rem;"></div>
+
+        <div id="consulta-resultado" class="hidden" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 id="res-protocolo" style="margin: 0;"></h3>
+            <span id="res-status-badge" class="badge"></span>
+          </div>
+          <p style="margin-top: 0.75rem;">
+            <strong>Categoria:</strong> <span id="res-categoria"></span><br>
+            <strong>Município:</strong> <span id="res-municipio"></span><br>
+            <strong>Data aproximada do fato:</strong> <span id="res-data-fato"></span><br>
+            <strong>Registrado em:</strong> <span id="res-criado-em"></span>
+          </p>
+
+          <h4>Histórico de Tramitação</h4>
+          <div id="res-timeline" class="timeline"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 5: ÁREA ADMINISTRATIVA (RF06, RF07, RF08) -->
+    <section id="view-admin" class="view">
+      <!-- Subtela Login -->
+      <div id="admin-login-box" class="card" style="max-width: 460px; margin: 0 auto;">
+        <h2>Acesso Administrativo</h2>
+        <p>Área restrita à equipe técnica responsável pela triagem e análise dos registros.</p>
+
+        <div id="login-erro" class="alert alert-danger hidden"></div>
+
+        <form id="form-login">
+          <div class="form-group">
+            <label for="admin-email">E-mail Institucional *</label>
+            <input type="email" id="admin-email" required placeholder="admin@ecodenuncia.edu.br">
+          </div>
+          <div class="form-group">
+            <label for="admin-senha">Senha *</label>
+            <input type="password" id="admin-senha" required>
+          </div>
+          <button type="submit" id="btn-login" class="btn" style="width: 100%;">Entrar no Painel</button>
+        </form>
+      </div>
+
+      <!-- Subtela Painel -->
+      <div id="admin-dashboard-box" class="hidden">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <h2 style="margin-bottom: 0.2rem;">Painel de Gestão de Ocorrências</h2>
+              <span id="admin-user-info" class="hint"></span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="logoutAdmin()">Sair do Sistema</button>
+          </div>
+
+          <div class="filters-bar">
+            <div>
+              <label for="filtro-status">Filtrar por Status</label>
+              <select id="filtro-status" onchange="carregarOcorrenciasAdmin()">
+                <option value="">Todos os status</option>
+                <option value="Recebida">Recebida</option>
+                <option value="Em análise">Em análise</option>
+                <option value="Encaminhada">Encaminhada</option>
+                <option value="Concluída">Concluída</option>
+                <option value="Não procedente/Duplicada">Não procedente/Duplicada</option>
+              </select>
+            </div>
+            <div>
+              <label for="filtro-categoria">Filtrar por Categoria</label>
+              <select id="filtro-categoria" onchange="carregarOcorrenciasAdmin()">
+                <option value="">Todas as categorias</option>
+                <option value="Descarte irregular de resíduos">Descarte irregular de resíduos</option>
+                <option value="Queimadas">Queimadas</option>
+                <option value="Poluição de cursos d’água">Poluição de cursos d’água</option>
+                <option value="Lançamento inadequado de esgoto">Lançamento inadequado de esgoto</option>
+                <option value="Retirada irregular de vegetação">Retirada irregular de vegetação</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <div>
+              <label for="filtro-busca">Buscar Protocolo</label>
+              <input type="text" id="filtro-busca" placeholder="ECO-2026..." oninput="carregarOcorrenciasAdmin()">
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Data Registro</th>
+                  <th>Categoria</th>
+                  <th>Município / Local</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-ocorrencias">
+                <tr><td colspan="6">Carregando registros...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE DETALHES E ATUALIZAÇÃO ADMINISTRATIVA (RF08) -->
+  <div id="modal-detalhes" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 id="modal-titulo" style="margin: 0;">Detalhes da Ocorrência</h3>
+        <button class="btn btn-secondary btn-sm" onclick="fecharModal()">Fechar ✕</button>
+      </div>
+
+      <div id="modal-corpo"></div>
+
+      <hr style="margin: 1.25rem 0; border: 0; border-top: 1px solid var(--border);">
+
+      <h4>Atualizar Status e Registrar Histórico</h4>
+      <form id="form-atualizar-status">
+        <input type="hidden" id="modal-ocorrencia-id">
+        <div class="form-group">
+          <label for="modal-novo-status">Novo Estado *</label>
+          <select id="modal-novo-status" required>
+            <option value="Recebida">Recebida</option>
+            <option value="Em análise">Em análise</option>
+            <option value="Encaminhada">Encaminhada</option>
+            <option value="Concluída">Concluída</option>
+            <option value="Não procedente/Duplicada">Não procedente/Duplicada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="modal-observacao">Observação Administrativa (visível na consulta pública)</label>
+          <textarea id="modal-observacao" rows="3" placeholder="Ex: Relato encaminhado para vistoria técnica da equipe ambiental."></textarea>
+        </div>
+        <button type="submit" id="btn-salvar-status" class="btn">Salvar Alteração</button>
+      </form>
+
+      <h4 style="margin-top: 1.5rem;">Histórico de Alterações</h4>
+      <div id="modal-historico" class="timeline"></div>
+    </div>
+  </div>
+
+  <footer>
+    EcoDenúncia — Curso Técnico em Análise e Desenvolvimento de Sistemas (2026).<br>
+    Desenvolvido em conformidade com diretrizes de privacidade (LGPD - Lei nº 13.709/2018).
+  </footer>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAÇÃO DO SUPABASE (Substitua pelas chaves públicas do seu projeto)
+    // =========================================================================
+    const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+    const SUPABASE_ANON_KEY = 'SUA-CHAVE-ANON-PUBLICA';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let ultimoRegistro = { protocolo: '', pin: '' };
+    let listaOcorrenciasCache = [];
+
+    // Limita data máxima do input date para hoje
+    document.getElementById('data_aproximada').max = new Date().toISOString().split('T')[0];
+
+    // =========================================================================
+    // NAVEGAÇÃO SPA
+    // =========================================================================
+    function navegar(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+
+      const targetView = document.getElementById(`view-${viewId}`);
+      if (targetView) targetView.classList.add('active');
+
+      const navBtn = document.getElementById(`nav-${viewId}`);
+      if (navBtn) navBtn.classList.add('active');
+
+      if (viewId === 'admin') {
+        verificarSessaoAdmin();
+      }
+    }
+
+    // =========================================================================
+    // REGISTRO DE OCORRÊNCIA (RF02, RF03, RF04, RF09)
+    // =========================================================================
+    document.getElementById('form-ocorrencia').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const erroBox = document.getElementById('registro-erro');
+      const btn = document.getElementById('btn-enviar-ocorrencia');
+      erroBox.classList.add('hidden');
+
+      const categoria = document.getElementById('categoria').value.trim();
+      const municipio = document.getElementById('municipio').value.trim();
+      const local_informado = document.getElementById('local_informado').value.trim();
+      const data_aproximada = document.getElementById('data_aproximada').value;
+      const descricao = document.getElementById('descricao').value.trim();
+      const fotoInput = document.getElementById('foto');
+
+      // Validação no cliente (complementada por constraints no PostgreSQL)
+      if (!categoria || !municipio || local_informado.length < 5 || !data_aproximada || descricao.length < 15) {
+        erroBox.textContent = 'Preencha todos os campos obrigatórios respeitando o tamanho mínimo (Local: 5 caracteres; Descrição: 15 caracteres).';
+        erroBox.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando relato...';
+
+      try {
+        let arquivoPath = null;
+
+        // Upload opcional com validação de MIME e tamanho (RF09)
+        if (fotoInput.files.length > 0) {
+          const file = fotoInput.files[0];
+          const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+          if (!tiposPermitidos.includes(file.type)) {
+            throw new Error('Formato de imagem inválido. Utilize apenas JPG, PNG ou WEBP.');
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            throw new Error('A imagem excede o limite máximo de 5 MB.');
+          }
+
+          const ext = file.name.split('.').pop();
+          const nomeArquivo = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+
+          const { data: uploadData, error: uploadError } = await supabaseClient.storage
+            .from('evidencias')
+            .upload(nomeArquivo, file);
+
+          if (uploadError) throw new Error('Falha ao anexar fotografia: ' + uploadError.message);
+          arquivoPath = uploadData.path;
+        }
+
+        // Chamada RPC segura para gravar e gerar protocolo
+        const { data, error } = await supabaseClient.rpc('registrar_ocorrencia_publica', {
+          p_categoria: categoria,
+          p_descricao: descricao,
+          p_local_informado: local_informado,
+          p_municipio: municipio,
+          p_data_aproximada: data_aproximada,
+          p_arquivo_path: arquivoPath
+        });
+
+        if (error) throw error;
+
+        ultimoRegistro = { protocolo: data.protocolo, pin: data.codigo_verificador };
+        document.getElementById('conf-protocolo').textContent = data.protocolo;
+        document.getElementById('conf-pin').textContent = data.codigo_verificador;
+        document.getElementById('form-ocorrencia').reset();
+        navegar('confirmacao');
+
+      } catch (err) {
+        erroBox.textContent = err.message || 'Erro ao registrar ocorrência. Tente novamente.';
+        erroBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Relato Ambiental';
+      }
+    });
+
+    function copiarProtocolo() {
+      const texto = `EcoDenúncia - Protocolo: ${ultimoRegistro.protocolo} | Código Verificador (PIN): ${ultimoRegistro.pin}`;
+      navigator.clipboard.writeText(texto).then(() => alert('Protocolo e PIN copiados para a área de transferência!'));
+    }
+
+    function irParaConsultaPreenchida() {
+      document.getElementById('consulta-protocolo').value = ultimoRegistro.protocolo;
+      document.getElementById('consulta-pin').value = ultimoRegistro.pin;
+      navegar('consultar');
+      document.getElementById('form-consulta').dispatchEvent(new Event('submit'));
+    }
+
+    // =========================================================================
+    // CONSULTA DE PROTOCOLO (RF05)
+    // =========================================================================
+    document.getElementById('form-consulta').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const protocolo = document.getElementById('consulta-protocolo').value.trim();
+      const pin = document.getElementById('consulta-pin').value.trim();
+      const feedback = document.getElementById('consulta-feedback');
+      const resultadoBox = document.getElementById('consulta-resultado');
+      const btn = document.getElementById('btn-consultar');
+
+      feedback.classList.add('hidden');
+      resultadoBox.classList.add('hidden');
+      btn.disabled = true;
+
+      try {
+        const { data, error } = await supabaseClient.rpc('consultar_ocorrencia_publica', {
+          p_protocolo: protocolo,
+          p_codigo_verificador: pin
+        });
+
+        if (error) throw error;
+
+        // Mensagem neutra caso não exista ou PIN inválido (T03)
+        if (!data) {
+          feedback.textContent = 'Registro não localizado. Verifique se o número de protocolo e o código verificador foram digitados corretamente.';
+          feedback.classList.remove('hidden');
+          return;
+        }
+
+        document.getElementById('res-protocolo').textContent = `Protocolo: ${data.protocolo}`;
+        const badge = document.getElementById('res-status-badge');
+        badge.textContent = data.status;
+        badge.className = `badge status-${data.status.replace(/\s+/g, '-')}`;
+
+        document.getElementById('res-categoria').textContent = data.categoria;
+        document.getElementById('res-municipio').textContent = data.municipio;
+        document.getElementById('res-data-fato').textContent = formatarDataSimples(data.data_aproximada);
+        document.getElementById('res-criado-em').textContent = formatarDataHora(data.criado_em);
+
+        const timeline = document.getElementById('res-timeline');
+        timeline.innerHTML = '';
+        data.historico.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'timeline-item';
+          div.innerHTML = `
+            <strong>${escapeHtml(item.novo_estado)}</strong> — <small>${formatarDataHora(item.data_alteracao)}</small><br>
+            <span>${escapeHtml(item.observacao)}</span>
+          `;
+          timeline.appendChild(div);
+        });
+
+        resultadoBox.classList.remove('hidden');
+      } catch (err) {
+        feedback.textContent = 'Não foi possível realizar a consulta no momento.';
+        feedback.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // =========================================================================
+    // ÁREA ADMINISTRATIVA (RF06, RF07, RF08)
+    // =========================================================================
+    async function verificarSessaoAdmin() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const loginBox = document.getElementById('admin-login-box');
+      const dashBox = document.getElementById('admin-dashboard-box');
+
+      if (!session) {
+        loginBox.classList.remove('hidden');
+        dashBox.classList.add('hidden');
+        return;
+      }
+
+      // Verifica se o usuário autenticado está ativo na tabela administrador
+      const { data: adminData, error } = await supabaseClient
+        .from('administrador')
+        .select('nome_exibicao, ativo')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error || !adminData || !adminData.ativo) {
+        await supabaseClient.auth.signOut();
+        loginBox.classList.remove('hidden');
+        dashBox.classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('admin-user-info').textContent = `Operador autenticado: ${adminData.nome_exibicao} (${session.user.email})`;
+      loginBox.classList.add('hidden');
+      dashBox.classList.remove('hidden');
+      carregarOcorrenciasAdmin();
+    }
+
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-senha').value;
+      const erroBox = document.getElementById('login-erro');
+      erroBox.classList.add('hidden');
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        erroBox.textContent = 'Credenciais inválidas ou usuário sem permissão administrativa.';
+        erroBox.classList.remove('hidden');
+        return;
+      }
+
+      verificarSessaoAdmin();
+    });
+
+    async function logoutAdmin() {
+      await supabaseClient.auth.signOut();
+      verificarSessaoAdmin();
+    }
+
+    async function carregarOcorrenciasAdmin() {
+      const tbody = document.getElementById('tabela-ocorrencias');
+      const statusFiltro = document.getElementById('filtro-status').value;
+      const catFiltro = document.getElementById('filtro-categoria').value;
+      const buscaFiltro = document.getElementById('filtro-busca').value.trim().toUpperCase();
+
+      let query = supabaseClient
+        .from('ocorrencia')
+        .select('*')
+        .order('criado_em', { ascending: false });
+
+      if (statusFiltro) query = query.eq('status', statusFiltro);
+      if (catFiltro) query = query.eq('categoria', catFiltro);
+      if (buscaFiltro) query = query.ilike('protocolo', `%${buscaFiltro}%`);
+
+      const { data, error } = await query;
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar registros: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+      }
+
+      listaOcorrenciasCache = data || [];
+      if (listaOcorrenciasCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Nenhuma ocorrência encontrada com os filtros selecionados.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = listaOcorrenciasCache.map(item => `
+        <tr>
+          <td><strong>${escapeHtml(item.protocolo)}</strong></td>
+          <td>${formatarDataHora(item.criado_em)}</td>
+          <td>${escapeHtml(item.categoria)}</td>
+          <td>${escapeHtml(item.municipio)}<br><small>${escapeHtml(item.local_informado)}</small></td>
+          <td><span class="badge status-${item.status.replace(/\s+/g, '-')}">${escapeHtml(item.status)}</span></td>
+          <td><button class="btn btn-sm" onclick="abrirDetalhesAdmin('${item.id}')">Analisar</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function abrirDetalhesAdmin(id) {
+      const item = listaOcorrenciasCache.find(o => o.id === id);
+      if (!item) return;
+
+      document.getElementById('modal-titulo').textContent = `Ocorrência ${item.protocolo}`;
+      document.getElementById('modal-ocorrencia-id').value = item.id;
+      document.getElementById('modal-novo-status').value = item.status;
+      document.getElementById('modal-observacao').value = '';
+
+      let imagemHtml = '<p><em>Nenhuma fotografia anexada.</em></p>';
+      if (item.arquivo_path) {
+        // Gera URL assinada temporária (60s) para visualização segura pelo administrador
+        const { data: signedData } = await supabaseClient.storage
+          .from('evidencias')
+          .createSignedUrl(item.arquivo_path, 60);
+
+        if (signedData?.signedUrl) {
+          imagemHtml = `
+            <p><strong>Evidência Fotográfica (acesso restrito):</strong></p>
+            <img src="${signedData.signedUrl}" alt="Fotografia anexada ao relato" style="max-width: 100%; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 1rem;">
+          `;
+        }
+      }
+
+      document.getElementById('modal-corpo').innerHTML = `
+        <p><strong>Status Atual:</strong> <span class="badge status-${item.status.replace(/\s+/g, '-')}">${escapeHtml(item.status)}</span></p>
+        <p><strong>Categoria:</strong> ${escapeHtml(item.categoria)}</p>
+        <p><strong>Município:</strong> ${escapeHtml(item.municipio)}</p>
+        <p><strong>Local Informado:</strong> ${escapeHtml(item.local_informado)}</p>
+        <p><strong>Data Aproximada do Fato:</strong> ${formatarDataSimples(item.data_aproximada)}</p>
+        <p><strong>Data de Registro:</strong> ${formatarDataHora(item.criado_em)}</p>
+        <p><strong>Descrição do Cidadão:</strong><br>${escapeHtml(item.descricao)}</p>
+        ${imagemHtml}
+      `;
+
+      // Carrega histórico da ocorrência
+      const { data: histData } = await supabaseClient
+        .from('historico_status')
+        .select('estado_anterior, novo_estado, observacao, data_alteracao')
+        .eq('ocorrencia_id', id)
+        .order('data_alteracao', { ascending: false });
+
+      const histBox = document.getElementById('modal-historico');
+      histBox.innerHTML = (histData || []).map(h => `
+        <div class="timeline-item">
+          <strong>${escapeHtml(h.estado_anterior)} → ${escapeHtml(h.novo_estado)}</strong>
+          (<small>${formatarDataHora(h.data_alteracao)}</small>)<br>
+          <span>${escapeHtml(h.observacao || 'Sem observação registrada.')}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('modal-detalhes').classList.add('open');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-detalhes').classList.remove('open');
+    }
+
+    document.getElementById('form-atualizar-status').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('modal-ocorrencia-id').value;
+      const novoStatus = document.getElementById('modal-novo-status').value;
+      const observacao = document.getElementById('modal-observacao').value;
+      const btn = document.getElementById('btn-salvar-status');
+
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      const { error } = await supabaseClient.rpc('atualizar_status_admin', {
+        p_ocorrencia_id: id,
+        p_novo_status: novoStatus,
+        p_observacao: observacao
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Salvar Alteração';
+
+      if (error) {
+        alert('Erro ao atualizar status: ' + error.message);
+        return;
+      }
+
+      fecharModal();
+      carregarOcorrenciasAdmin();
+    });
+
+    // =========================================================================
+    // UTILITÁRIOS DE FORMATAÇÃO E SEGURANÇA XSS
+    // =========================================================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatarDataSimples(isoDate) {
+      if (!isoDate) return '';
+      const [ano, mes, dia] = isoDate.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatarDataHora(isoTimestamp) {
+      if (!isoTimestamp) return '';
+      return new Date(isoTimestamp).toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    }
+  </script>
+</body>
+</html>
